@@ -13,7 +13,6 @@ import {
   PlaygroundTile,
 } from "@/components/playground/PlaygroundTile";
 import { useConfig } from "@/hooks/useConfig";
-import { TranscriptionTile } from "@/transcriptions/TranscriptionTile";
 import {
   useConnectionState,
   useDataChannel,
