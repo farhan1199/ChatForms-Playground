@@ -261,7 +261,7 @@ export default function Playground({
         }
       />
       <div
-        className={`flex gap-4 py-4 grow w-full selection:bg-${config.settings.theme_color}-900`}
+        className="flex gap-4 py-4 grow w-full"
         style={{ height: `calc(100% - ${headerHeight}px)` }}
       >
         {/* Mobile Tabs */}

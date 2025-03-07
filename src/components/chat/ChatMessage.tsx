@@ -18,7 +18,7 @@ export const ChatMessage = ({
       {!hideName && (
         <div
           className={`text-${
-            isSelf ? "gray-600" : accentColor + "-700 text-ts-" + accentColor
+            isSelf ? "gray-600" : "[#4D2583]"
           } uppercase text-xs font-medium`}
         >
           {name}
@@ -26,10 +26,12 @@ export const ChatMessage = ({
       )}
       <div
         className={`pr-4 text-${
-          isSelf ? "gray-600" : accentColor + "-700"
-        } text-sm ${
-          isSelf ? "" : "drop-shadow-" + accentColor
-        } whitespace-pre-line ${isSelf ? "bg-gray-50 p-2 rounded-md" : ""}`}
+          isSelf ? "gray-600" : "gray-700"
+        } text-sm whitespace-pre-line ${
+          isSelf
+            ? "bg-gray-50 p-2 rounded-md"
+            : `bg-[#F5F0FF] p-2 rounded-md border-l-2 border-[#4D2583]`
+        }`}
       >
         {message}
       </div>
