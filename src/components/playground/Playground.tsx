@@ -21,10 +21,12 @@ import {
   useRoomInfo,
   useTracks,
   useVoiceAssistant,
+  useChat,
 } from "@livekit/components-react";
 import { ConnectionState, LocalParticipant, Track } from "livekit-client";
 import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import tailwindTheme from "../../lib/tailwindTheme.preval";
+import { ChatTile } from "@/components/chat/ChatTile";
 
 export interface PlaygroundMeta {
   name: string;
@@ -48,6 +50,8 @@ export default function Playground({
   const { name } = useRoomInfo();
   const [transcripts, setTranscripts] = useState<ChatMessageType[]>([]);
   const { localParticipant } = useLocalParticipant();
+
+  const { send: sendChat } = useChat();
 
   const voiceAssistant = useVoiceAssistant();
 
@@ -74,21 +78,21 @@ export default function Playground({
         const decoded = JSON.parse(
           new TextDecoder("utf-8").decode(msg.payload)
         );
-        let timestamp = new Date().getTime();
-        if ("timestamp" in decoded && decoded.timestamp > 0) {
-          timestamp = decoded.timestamp;
-        }
 
         console.log("decoded", decoded);
-        setTranscripts([
-          ...transcripts,
-          {
-            name: "You",
-            message: decoded.text,
-            timestamp: timestamp,
-            isSelf: true,
-          },
-        ]);
+
+        // Process the message based on the format
+        const newMessage = {
+          // Use the id as the name (first part before the dash)
+          name: decoded.id ? decoded.id.split("-")[0] : "unknown",
+          message: decoded.message || decoded.text,
+          timestamp: decoded.timestamp || new Date().getTime(),
+          isSelf: decoded.sender !== "agent", // Messages from agent are not "self"
+          id: decoded.id,
+          sender: decoded.sender,
+        };
+
+        setTranscripts((prev) => [...prev, newMessage]);
       }
     },
     [transcripts]
@@ -109,16 +113,45 @@ export default function Playground({
   }, [config.settings.theme_color]);
 
   const chatTileContent = useMemo(() => {
-    if (voiceAssistant.audioTrack) {
-      return (
-        <TranscriptionTile
-          agentAudioTrack={voiceAssistant.audioTrack}
-          accentColor={config.settings.theme_color}
-        />
-      );
-    }
-    return <></>;
-  }, [config.settings.theme_color, voiceAssistant.audioTrack]);
+    return (
+      <ChatTile
+        messages={transcripts.map((msg) => ({
+          name: msg.id
+            ? msg.id.split("-")[0]
+            : msg.sender === "agent"
+            ? "Assistant"
+            : "You",
+          message: (msg.message || msg.text || "").toString(),
+          isSelf: msg.sender !== "agent",
+          timestamp: msg.timestamp || new Date().getTime(),
+        }))}
+        accentColor={config.settings.theme_color}
+        onSend={async (message) => {
+          if (message.trim()) {
+            try {
+              await sendChat(message);
+              console.log("Message sent:", message);
+
+              const newMessage = {
+                name: "You",
+                message: message,
+                timestamp: new Date().getTime(),
+                isSelf: true,
+                sender: "member",
+              };
+              setTranscripts((prev) => [...prev, newMessage]);
+
+              return null;
+            } catch (error) {
+              console.error("Error sending message:", error);
+              return null;
+            }
+          }
+          return null;
+        }}
+      />
+    );
+  }, [config.settings.theme_color, transcripts, sendChat]);
 
   const settingsTileContent = useMemo(() => {
     return (
