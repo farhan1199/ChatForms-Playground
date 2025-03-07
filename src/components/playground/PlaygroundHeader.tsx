@@ -34,23 +34,16 @@ export const PlaygroundHeader = ({
     >
       <div className="flex items-center gap-3 basis-2/3">
         <div className="flex lg:basis-1/2">
-          <p>1199SEIU</p>
+          <div className="font-bold text-xl tracking-tight bg-gradient-to-r from-[#4D2583] to-[#6A35B8] text-white px-4 py-1.5 rounded-md shadow-md flex items-center">
+            <span className="mr-1 font-extrabold">1199</span>
+            <span className="font-semibold">SEIU</span>
+          </div>
         </div>
         <div className="lg:basis-1/2 lg:text-center text-xs lg:text-base lg:font-semibold text-gray-600">
           {title}
         </div>
       </div>
       <div className="flex basis-1/3 justify-end items-center gap-2">
-        {githubLink && (
-          <a
-            href={githubLink}
-            target="_blank"
-            className={`text-gray-600 hover:text-gray-800 transition-colors`}
-          >
-            <GithubSVG />
-          </a>
-        )}
-        {config.settings.editable && <SettingsDropdown />}
         <Button
           accentColor={
             connectionState === ConnectionState.Connected ? "red" : accentColor
