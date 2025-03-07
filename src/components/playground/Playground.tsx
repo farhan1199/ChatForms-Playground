@@ -165,11 +165,7 @@ export default function Playground({
         <ConfigurationPanelItem title="Settings">
           {localParticipant && (
             <div className="flex flex-col gap-2">
-              <NameValueRow
-                name="Room"
-                value={name}
-                valueColor={`${config.settings.theme_color}-500`}
-              />
+              <NameValueRow name="Room" value={name} valueColor="[#4D2583]" />
               <NameValueRow
                 name="Participant"
                 value={localParticipant.identity}
@@ -190,7 +186,7 @@ export default function Playground({
               }
               valueColor={
                 roomState === ConnectionState.Connected
-                  ? `${config.settings.theme_color}-500`
+                  ? "[#4D2583]"
                   : "gray-500"
               }
             />
@@ -205,11 +201,7 @@ export default function Playground({
                   "FALSE"
                 )
               }
-              valueColor={
-                voiceAssistant.agent
-                  ? `${config.settings.theme_color}-500`
-                  : "gray-500"
-              }
+              valueColor={voiceAssistant.agent ? "[#4D2583]" : "gray-500"}
             />
           </div>
         </ConfigurationPanelItem>
@@ -251,7 +243,7 @@ export default function Playground({
     content: (
       <PlaygroundTile
         padding={false}
-        backgroundColor="gray-950"
+        backgroundColor="[#F7F6F5]"
         className="h-full w-full basis-1/4 items-start overflow-y-auto"
         childrenClassName="h-full grow items-start"
       >
@@ -299,7 +291,7 @@ export default function Playground({
         {/* Desktop Settings */}
         <PlaygroundTile
           padding={false}
-          backgroundColor="gray-950"
+          backgroundColor="[#F7F6F5]"
           className="h-full w-full basis-1/4 items-start overflow-y-auto hidden max-w-[480px] lg:flex shadow-md"
           childrenClassName="h-full grow items-start"
         >

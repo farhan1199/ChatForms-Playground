@@ -36,12 +36,12 @@ export const PlaygroundTile: React.FC<PlaygroundTileProps> = ({
     >
       {title && (
         <div
-          className="flex items-center justify-center text-xs uppercase py-2 border-b border-b-gray-200 tracking-wider bg-gray-50"
+          className="flex items-center justify-center text-xs uppercase py-2 border-b border-b-gray-200 tracking-wider bg-white"
           style={{
             height: `${titleHeight}px`,
           }}
         >
-          <h2>{title}</h2>
+          <h2 className="font-medium">{title}</h2>
         </div>
       )}
       <div
@@ -74,7 +74,7 @@ export const PlaygroundTabbedTile: React.FC<PlaygroundTabbedTileProps> = ({
       className={`flex flex-col h-full border rounded-md border-gray-200 text-gray-700 bg-${backgroundColor} shadow-sm ${className}`}
     >
       <div
-        className="flex items-center justify-start text-xs uppercase border-b border-b-gray-200 tracking-wider bg-gray-50"
+        className="flex items-center justify-start text-xs uppercase border-b border-b-gray-200 tracking-wider bg-white"
         style={{
           height: `${titleHeight}px`,
         }}
@@ -84,7 +84,7 @@ export const PlaygroundTabbedTile: React.FC<PlaygroundTabbedTileProps> = ({
             key={index}
             className={`px-4 py-2 rounded-t-md hover:bg-gray-100 hover:text-gray-700 border-r border-r-gray-200 ${
               index === activeTab
-                ? `bg-white text-gray-700 font-medium`
+                ? `bg-[#F7F6F5] text-[#4D2583] font-medium`
                 : `bg-transparent text-gray-500`
             }`}
             onClick={() => setActiveTab(index)}
