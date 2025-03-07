@@ -34,19 +34,19 @@ const TokenConnect = ({
   const [token, setToken] = useState(config.settings.token);
 
   return (
-    <div className="flex left-0 top-0 w-full h-full bg-black/80 items-center justify-center text-center">
-      <div className="flex flex-col gap-4 p-8 bg-gray-950 w-full text-white border-t border-gray-900">
+    <div className="flex left-0 top-0 w-full h-full bg-white/80 items-center justify-center text-center">
+      <div className="flex flex-col gap-4 p-8 bg-gray-50 w-full text-gray-700 border-t border-gray-200">
         <div className="flex flex-col gap-2">
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="text-white text-sm bg-transparent border border-gray-800 rounded-sm px-3 py-2"
+            className="text-gray-700 text-sm bg-transparent border border-gray-300 rounded-sm px-3 py-2"
             placeholder="wss://url"
           ></input>
           <textarea
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            className="text-white text-sm bg-transparent border border-gray-800 rounded-sm px-3 py-2"
+            className="text-gray-700 text-sm bg-transparent border border-gray-300 rounded-sm px-3 py-2"
             placeholder="room token..."
           ></textarea>
         </div>
@@ -67,7 +67,7 @@ const TokenConnect = ({
           href="https://kitt.livekit.io/"
           className={`text-xs text-${accentColor}-500 hover:underline`}
         >
-          Don’t have a URL or token? Try out our KITT example to see agents in
+          Don't have a URL or token? Try out our KITT example to see agents in
           action!
         </a>
       </div>
@@ -84,16 +84,16 @@ export const PlaygroundConnect = ({
     ? "Connect to playground with LiveKit Cloud or manually with a URL and token"
     : "Connect to playground with a URL and token";
   return (
-    <div className="flex left-0 top-0 w-full h-full bg-black/80 items-center justify-center text-center gap-2">
+    <div className="flex left-0 top-0 w-full h-full bg-white/80 items-center justify-center text-center gap-2">
       <div className="min-h-[540px]">
-        <div className="flex flex-col bg-gray-950 w-full max-w-[480px] rounded-lg text-white border border-gray-900">
+        <div className="flex flex-col bg-gray-50 w-full max-w-[480px] rounded-lg text-gray-700 border border-gray-200">
           <div className="flex flex-col gap-2">
             <div className="px-10 space-y-2 py-6">
               <h1 className="text-2xl">Connect to playground</h1>
               <p className="text-sm text-gray-500">{copy}</p>
             </div>
             {CLOUD_ENABLED && (
-              <div className="flex justify-center pt-2 gap-4 border-b border-t border-gray-900">
+              <div className="flex justify-center pt-2 gap-4 border-b border-t border-gray-200">
                 <ConnectTab
                   active={showCloud}
                   onClick={() => {
@@ -113,7 +113,7 @@ export const PlaygroundConnect = ({
               </div>
             )}
           </div>
-          <div className="flex flex-col bg-gray-900/30 flex-grow">
+          <div className="flex flex-col bg-gray-100 flex-grow">
             {showCloud && CLOUD_ENABLED ? (
               <CloudConnect accentColor={accentColor} />
             ) : (

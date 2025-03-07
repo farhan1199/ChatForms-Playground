@@ -32,11 +32,11 @@ export const PlaygroundTile: React.FC<PlaygroundTileProps> = ({
   const contentPadding = padding ? 4 : 0;
   return (
     <div
-      className={`flex flex-col border rounded-sm border-gray-800 text-gray-500 bg-${backgroundColor} ${className}`}
+      className={`flex flex-col border rounded-sm border-gray-300 text-gray-700 bg-${backgroundColor} ${className}`}
     >
       {title && (
         <div
-          className="flex items-center justify-center text-xs uppercase py-2 border-b border-b-gray-800 tracking-wider"
+          className="flex items-center justify-center text-xs uppercase py-2 border-b border-b-gray-300 tracking-wider"
           style={{
             height: `${titleHeight}px`,
           }}
@@ -66,15 +66,15 @@ export const PlaygroundTabbedTile: React.FC<PlaygroundTabbedTileProps> = ({
 }) => {
   const contentPadding = 4;
   const [activeTab, setActiveTab] = useState(initialTab);
-  if(activeTab >= tabs.length) {
+  if (activeTab >= tabs.length) {
     return null;
   }
   return (
     <div
-      className={`flex flex-col h-full border rounded-sm border-gray-800 text-gray-500 bg-${backgroundColor} ${className}`}
+      className={`flex flex-col h-full border rounded-sm border-gray-300 text-gray-700 bg-${backgroundColor} ${className}`}
     >
       <div
-        className="flex items-center justify-start text-xs uppercase border-b border-b-gray-800 tracking-wider"
+        className="flex items-center justify-start text-xs uppercase border-b border-b-gray-300 tracking-wider"
         style={{
           height: `${titleHeight}px`,
         }}
@@ -82,9 +82,9 @@ export const PlaygroundTabbedTile: React.FC<PlaygroundTabbedTileProps> = ({
         {tabs.map((tab, index) => (
           <button
             key={index}
-            className={`px-4 py-2 rounded-sm hover:bg-gray-800 hover:text-gray-300 border-r border-r-gray-800 ${
+            className={`px-4 py-2 rounded-sm hover:bg-gray-200 hover:text-gray-700 border-r border-r-gray-300 ${
               index === activeTab
-                ? `bg-gray-900 text-gray-300`
+                ? `bg-gray-100 text-gray-700`
                 : `bg-transparent text-gray-500`
             }`}
             onClick={() => setActiveTab(index)}
