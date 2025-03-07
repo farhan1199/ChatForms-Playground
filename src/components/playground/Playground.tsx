@@ -70,8 +70,7 @@ export default function Playground({
 
   const onDataReceived = useCallback(
     (msg: any) => {
-      console.log("onDataReceived", msg);
-      if (msg.topic === "transcription") {
+      if (msg.topic === "transcription" || msg.topic === "lk-chat-topic") {
         const decoded = JSON.parse(
           new TextDecoder("utf-8").decode(msg.payload)
         );
@@ -79,6 +78,8 @@ export default function Playground({
         if ("timestamp" in decoded && decoded.timestamp > 0) {
           timestamp = decoded.timestamp;
         }
+
+        console.log("decoded", decoded);
         setTranscripts([
           ...transcripts,
           {
