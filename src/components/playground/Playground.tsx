@@ -2,7 +2,6 @@
 
 import { LoadingSVG } from "@/components/button/LoadingSVG";
 import { ChatMessageType } from "@/components/chat/ChatTile";
-import { ColorPicker } from "@/components/colorPicker/ColorPicker";
 import { AudioInputTile } from "@/components/config/AudioInputTile";
 import { ConfigurationPanelItem } from "@/components/config/ConfigurationPanelItem";
 import { NameValueRow } from "@/components/config/NameValueRow";
@@ -63,6 +62,13 @@ export default function Playground({
       localParticipant.setMicrophoneEnabled(config.settings.inputs.mic);
     }
   }, [config, localParticipant, roomState]);
+
+  // Reset messages when disconnected
+  useEffect(() => {
+    if (roomState === ConnectionState.Disconnected) {
+      setTranscripts([]);
+    }
+  }, [roomState]);
 
   const localTracks = tracks.filter(
     ({ participant }) => participant instanceof LocalParticipant
@@ -226,7 +232,7 @@ export default function Playground({
 
   let mobileTabs: PlaygroundTab[] = [];
 
-  if (config.settings.chat) {
+  if (config.settings.chat && roomState === ConnectionState.Connected) {
     mobileTabs.push({
       title: "Chat",
       content: chatTileContent,
@@ -256,32 +262,80 @@ export default function Playground({
         height={headerHeight}
         accentColor={config.settings.theme_color}
         connectionState={roomState}
-        onConnectClicked={() =>
-          onConnect(roomState === ConnectionState.Disconnected)
-        }
+        onConnectClicked={() => {
+          if (roomState === ConnectionState.Connected) {
+            setTranscripts([]);
+          }
+          onConnect(roomState === ConnectionState.Disconnected);
+        }}
       />
       <div
         className="flex gap-4 py-4 grow w-full"
         style={{ height: `calc(100% - ${headerHeight}px)` }}
       >
-        {/* Mobile Tabs */}
+        {/* Mobile View */}
         <div className="flex flex-col grow basis-1/2 gap-4 h-full lg:hidden">
-          <PlaygroundTabbedTile
-            className="h-full shadow-md"
-            tabs={mobileTabs}
-            initialTab={mobileTabs.length - 1}
-          />
+          {roomState === ConnectionState.Connected ? (
+            // Show Tabs when connected
+            <PlaygroundTabbedTile
+              className="h-full shadow-md"
+              tabs={mobileTabs}
+              initialTab={mobileTabs.length - 1}
+            />
+          ) : (
+            // Show Welcome Screen when not connected
+            <div className="flex flex-col items-center justify-center h-full w-full bg-white rounded-md shadow-md border border-gray-200 p-4">
+              <div className="font-bold text-3xl tracking-tight bg-gradient-to-r from-[#4D2583] to-[#6A35B8] text-transparent bg-clip-text mb-3 text-center">
+                Welcome to 1199SEIU
+              </div>
+              <p className="text-gray-600 text-base mb-6 text-center">
+                Connect with our virtual assistant to get help with your forms
+                and questions.
+              </p>
+              <button
+                onClick={() => {
+                  setTranscripts([]);
+                  onConnect(true);
+                }}
+                className="bg-gradient-to-r from-[#4D2583] to-[#6A35B8] text-white px-6 py-2 rounded-md text-base font-medium shadow-md hover:shadow-lg transition-all"
+              >
+                Let's Get Started
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Desktop Chat */}
-        {config.settings.chat && (
-          <PlaygroundTile
-            title="Chat"
-            className="h-full grow basis-1/4 hidden lg:flex shadow-md"
-          >
-            {chatTileContent}
-          </PlaygroundTile>
-        )}
+        {/* Desktop View - Show either Welcome Screen or Chat based on connection state */}
+        <div className="h-full grow basis-3/4 hidden lg:flex">
+          {roomState === ConnectionState.Connected ? (
+            // Show Chat when connected
+            config.settings.chat && (
+              <PlaygroundTile title="Chat" className="h-full w-full shadow-md">
+                {chatTileContent}
+              </PlaygroundTile>
+            )
+          ) : (
+            // Show Welcome Screen when not connected
+            <div className="flex flex-col items-center justify-center h-full w-full bg-white rounded-md shadow-md border border-gray-200 p-8">
+              <div className="font-bold text-4xl tracking-tight bg-gradient-to-r from-[#4D2583] to-[#6A35B8] text-transparent bg-clip-text mb-4">
+                Welcome to 1199SEIU
+              </div>
+              <p className="text-gray-600 text-lg mb-8 text-center max-w-lg">
+                Connect with our virtual assistant to get help with your forms
+                and questions.
+              </p>
+              <button
+                onClick={() => {
+                  setTranscripts([]);
+                  onConnect(true);
+                }}
+                className="bg-gradient-to-r from-[#4D2583] to-[#6A35B8] text-white px-8 py-3 rounded-md text-lg font-medium shadow-md hover:shadow-lg transition-all transform hover:scale-105"
+              >
+                Let's Get Started
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Desktop Settings */}
         <PlaygroundTile
