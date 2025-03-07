@@ -82,6 +82,7 @@ export default function Playground({
 
   const onDataReceived = useCallback(
     (msg: any) => {
+      console.log("onDataReceived", msg);
       if (msg.topic === "transcription") {
         const decoded = JSON.parse(
           new TextDecoder("utf-8").decode(msg.payload)

@@ -1,0 +1,375 @@
+# This is the agent.py of this project and it is in a seperate codebase. Always use this code as your agent server code:
+
+# type: ignore (this is the agent.py code and the ignore is not for you but for type safety so you can use it)
+```python
+import asyncio
+import logging
+import os
+import time
+import json
+from datetime import datetime
+
+from dotenv import load_dotenv
+from livekit import rtc
+from livekit.agents import (
+    AutoSubscribe,
+    JobContext,
+    JobProcess,
+    WorkerOptions,
+    cli,
+    stt,
+    transcription,
+)
+from livekit.plugins import openai, silero
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Configure logging to see all messages
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("form_assistant")
+
+# Check environment variables and report any missing ones
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if not openai_api_key:
+    logger.warning(
+        "OPENAI_API_KEY environment variable not found. Will use dummy responses."
+    )
+    has_openai = False
+else:
+    logger.info("OPENAI_API_KEY found. Will use OpenAI for responses.")
+    try:
+        from openai import OpenAI
+
+        client = OpenAI(api_key=openai_api_key)
+        has_openai = True
+    except ImportError:
+        logger.warning("OpenAI package not installed. Will use dummy responses.")
+        has_openai = False
+    except Exception as e:
+        logger.error(f"Error initializing OpenAI client: {e}")
+        has_openai = False
+
+async def process_user_input(user_identity, user_message):
+    """Process user input and progress through the form using AI"""
+    try:
+        # Initialize conversation and function context if they don't exist
+        if user_identity not in user_conversations:
+            user_conversations[user_identity] = [
+                {
+                    "role": "system",
+                    "content": """
+                You are a form assistant that collects information to fill out forms.
+                
+                There are two types of forms:
+                1. PAC form
+                2. Membership form
+                
+                First ask which form type the user wants (PAC or Membership).
+                Then collect all required information for that form type in a conversational manner, asking for one piece of information at a time.
+                
+                When all required information has been collected:
+                - For PAC forms, call the collect_pac_form function with all required fields.
+                - For Membership forms, call the collect_membership_form function with all required fields.
+                
+                Always maintain a conversational tone and ask for only one piece of information at a time.
+                When asking for a state, accept either the full name or abbreviation.
+                If the user wants to change any information they've already provided, ask them for the new value and incorporate it.
+                Keep track of what information you've collected so far to avoid asking for the same information multiple times.
+                """,
+                }
+            ]
+
+        if user_identity not in function_contexts:
+            function_contexts[user_identity] = FormFunctions()
+
+        # Add user message to conversation history
+        user_conversations[user_identity].append(
+            {"role": "user", "content": user_message}
+        )
+
+        # Get AI response using the function context for this user
+        response = await process_with_llm(
+            user_identity,
+            user_conversations[user_identity],
+            function_contexts[user_identity],
+        )
+
+        logger.info(f"[FORM SYSTEM to {user_identity}] -> {response}")
+        return response
+    except Exception as e:
+        logger.error(f"Error processing user input: {e}", exc_info=True)
+        return f"I encountered an error processing your information. Let's try again."
+
+
+async def send_response_to_frontend(
+    room: rtc.Room, response: str, source_identity: str = None, sender: str = "agent"
+):
+    """Send response using the exact format and topic that LiveKit's Chat component expects"""
+    try:
+        # From the source code, we can see the ChatManager uses "_CHAT_TOPIC = "lk-chat-topic""
+        topic = "lk-chat-topic"
+
+        # Log the room state - only log what's available
+        logger.info(f"Room state - Name: {room.name}")
+        logger.info(f"Local participant state: {room.local_participant}")
+
+        # The Chat component expects this exact JSON format with "message", "id", and "timestamp"
+        message_data = {
+            "message": response,
+            "id": f"form-assistant-{int(time.time() * 1000)}",
+            "timestamp": int(datetime.now().timestamp() * 1000),
+            "sender": sender,  # Add sender field
+        }
+
+        message_json = json.dumps(message_data)
+        logger.info(f"Preparing to send message: {message_json}")
+
+        # Send as a data packet with the correct topic
+        try:
+            await room.local_participant.publish_data(
+                message_json.encode("utf-8"),
+                topic=topic,
+                reliable=True,
+            )
+            logger.info(f"Successfully published data to topic '{topic}'")
+            return True
+        except Exception as e:
+            logger.error(f"Error publishing data: {e}", exc_info=True)
+            return False
+
+    except Exception as e:
+        logger.error(f"Failed to send response to frontend: {e}", exc_info=True)
+        return False
+
+
+def prewarm(proc: JobProcess):
+    proc.userdata["vad"] = silero.VAD.load()
+
+
+async def entrypoint(ctx: JobContext):
+    vad = ctx.proc.userdata["vad"]  # Note: Remove the extra tuple parentheses
+    logger.info(f"Starting form assistant in room: {ctx.room.name}")
+
+    # Set up speech-to-text
+    stt_impl = openai.STT()
+    if not stt_impl.capabilities.streaming:
+        stt_impl = stt.StreamAdapter(
+            stt=stt_impl,
+            vad=vad,
+        )
+
+    async def handle_speech(participant: rtc.RemoteParticipant, track: rtc.Track):
+        """Process audio from a participant and respond"""
+        logger.info(f"Processing audio from {participant.identity}")
+        audio_stream = rtc.AudioStream(track)
+        forwarder = transcription.STTSegmentsForwarder(
+            room=ctx.room, participant=participant, track=track
+        )
+
+        # Create STT stream - the StreamAdapter with Silero VAD will automatically
+        # handle detecting when speech is complete
+        stt_stream = stt_impl.stream()
+
+        # Process speech transcript events
+        async def process_speech():
+            current_transcript = ""
+
+            async for ev in stt_stream:
+                # Forward all events to client for display
+                forwarder.update(ev)
+
+                # Send interim transcripts to chat
+                if ev.type == stt.SpeechEventType.INTERIM_TRANSCRIPT:
+                    text = ev.alternatives[0].text
+                    if text.strip() != current_transcript:
+                        current_transcript = text.strip()
+                        # Send interim transcript as a special message type
+                        logger.info(
+                            f"[interim SPEECH from {participant.identity}] -> {text}"
+                        )
+                        message_data = {
+                            "message": current_transcript,
+                            "id": f"transcript-{int(time.time() * 1000)}",
+                            "timestamp": int(datetime.now().timestamp() * 1000),
+                            "type": "transcript",
+                            "sender": "member",  # Mark as member's message
+                        }
+                        await ctx.room.local_participant.publish_data(
+                            json.dumps(message_data).encode("utf-8"),
+                            topic="lk-chat-topic",
+                            reliable=True,
+                        )
+
+                elif ev.type == stt.SpeechEventType.FINAL_TRANSCRIPT:
+                    text = ev.alternatives[0].text
+                    logger.info(f"[FINAL SPEECH from {participant.identity}] -> {text}")
+
+                    if text.strip():  # Only process non-empty text
+                        try:
+                            # Send final transcript to chat
+                            message_data = {
+                                "message": text.strip(),
+                                "id": f"transcript-final-{int(time.time() * 1000)}",
+                                "timestamp": int(datetime.now().timestamp() * 1000),
+                                "type": "transcript",
+                                "sender": "member",  # Mark as member's message
+                            }
+                            await ctx.room.local_participant.publish_data(
+                                json.dumps(message_data).encode("utf-8"),
+                                topic="lk-chat-topic",
+                                reliable=True,
+                            )
+
+                            # Process the speech input for the form
+                            logger.info(f"Processing speech input: {text}")
+                            response = await process_user_input(
+                                participant.identity, text
+                            )
+                            logger.info(f"Got response from LLM: {response}")
+
+                            # Send response using our standardized function
+                            if response:  # Make sure we have a response to send
+                                logger.info(
+                                    f"Attempting to send response to frontend..."
+                                )
+                                # Add sender type to the response
+                                success = await send_response_to_frontend(
+                                    ctx.room,
+                                    response,
+                                    participant.identity,
+                                    sender="agent",
+                                )
+                                if success:
+                                    logger.info(
+                                        f"Successfully sent response to frontend: {response}"
+                                    )
+                                else:
+                                    logger.error("Failed to send response to frontend")
+                            else:
+                                logger.warning("No response received from LLM")
+                        except Exception as e:
+                            logger.error(f"Error processing speech: {e}", exc_info=True)
+
+        # Start processing speech in background
+        speech_task = asyncio.create_task(process_speech())
+
+        # Feed audio frames to speech recognizer
+        try:
+            async for ev in audio_stream:
+                stt_stream.push_frame(ev.frame)
+        finally:
+            # Make sure we clean up the task if the audio stream ends
+            speech_task.cancel()
+
+    # Handle data packets for chat messages
+    @ctx.room.on("data_received")
+    def on_data_received(data: rtc.DataPacket):
+        try:
+            # Decode the data
+            text_data = data.data.decode("utf-8")
+
+            # For debugging - see what data packets we're receiving
+            logger.info(f"Data packet received on topic '{data.topic}'")
+
+            # Check if participant exists before accessing identity
+            participant_identity = (
+                data.participant.identity if data.participant else "unknown"
+            )
+            logger.info(f"Sender identity: {participant_identity}")
+
+            # Only process messages from the chat component - it uses "lk-chat-topic"
+            if data.topic == "lk-chat-topic":
+                try:
+                    # Try to parse as JSON
+                    json_data = json.loads(text_data)
+                    if isinstance(json_data, dict) and "message" in json_data:
+                        message_text = json_data["message"]
+                        message_id = json_data.get("id", "")
+                        logger.info(
+                            f"[CHAT from {participant_identity}] -> {message_text} (id: {message_id})"
+                        )
+
+                        # Don't respond to our own messages
+                        if message_id.startswith("form-assistant-"):
+                            logger.info(
+                                "Ignoring message from form assistant (ourselves)"
+                            )
+                            return
+
+                        # If we don't have a valid participant, we can't process the message
+                        if not data.participant:
+                            logger.warning(
+                                "Received message with no participant information, cannot process"
+                            )
+                            return
+
+                        async def process_message():
+                            try:
+                                # Process the message for the form
+                                response = await process_user_input(
+                                    data.participant.identity, message_text
+                                )
+
+                                # Send using our standardized function
+                                await send_response_to_frontend(
+                                    ctx.room, response, data.participant.identity
+                                )
+                            except Exception as e:
+                                logger.error(
+                                    f"Error processing message: {e}", exc_info=True
+                                )
+
+                        # Start processing in background
+                        asyncio.create_task(process_message())
+                except json.JSONDecodeError:
+                    logger.warning(f"Received non-JSON data on chat topic: {text_data}")
+        except Exception as e:
+            logger.error(f"Error in data_received handler: {e}", exc_info=True)
+
+    @ctx.room.on("track_subscribed")
+    def on_track_subscribed(track, publication, participant):
+        if track.kind == rtc.TrackKind.KIND_AUDIO:
+            logger.info(f"Subscribed to audio track from {participant.identity}")
+            asyncio.create_task(handle_speech(participant, track))
+
+    # Connect to room
+    logger.info("Connecting to room...")
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    logger.info(f"Connected to room: {ctx.room.name}")
+
+    # Announce presence after connecting
+    async def announce():
+        try:
+            welcome_msg = "Form Assistant is active. What type of form would you like to fill? The options are PAC form or Membership form."
+            await send_response_to_frontend(ctx.room, welcome_msg)
+            logger.info("Sent welcome message")
+
+            # Initialize conversation storage
+            global user_conversations, function_contexts
+            user_conversations = {}
+            function_contexts = {}
+
+        except Exception as e:
+            logger.error(f"Failed to send welcome: {str(e)}", exc_info=True)
+
+    # Send welcome message after a short delay
+    await asyncio.sleep(1)  # Wait 1 second before sending welcome
+    await announce()
+
+
+if __name__ == "__main__":
+    # Check for required environment variables
+    required_vars = ["LIVEKIT_URL", "LIVEKIT_API_KEY", "LIVEKIT_API_SECRET"]
+    missing = [var for var in required_vars if not os.getenv(var)]
+
+    if missing:
+        print(f"Missing required environment variables: {', '.join(missing)}")
+        print("Please ensure these are set in your .env file or environment.")
+        exit(1)
+
+    print("Starting Form Assistant. CTRL+C to exit.")
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, prewarm_fnc=prewarm))
+```
