@@ -115,11 +115,7 @@ export default function Playground({
     return (
       <ChatTile
         messages={transcripts.map((msg) => ({
-          name: msg.id
-            ? msg.id.split("-")[0]
-            : msg.sender === "agent"
-            ? "Assistant"
-            : "You",
+          name: msg.sender === "agent" ? "Agent" : "You",
           message: (msg.message || msg.text || "").toString(),
           isSelf: msg.sender !== "agent",
           timestamp: msg.timestamp || new Date().getTime(),
