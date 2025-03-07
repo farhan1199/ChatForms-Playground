@@ -4,6 +4,8 @@ type ChatMessageProps = {
   name: string;
   isSelf: boolean;
   hideName?: boolean;
+  suggestions?: string[];
+  onSuggestionClick?: (suggestion: string) => void;
 };
 
 export const ChatMessage = ({
@@ -12,9 +14,18 @@ export const ChatMessage = ({
   accentColor,
   isSelf,
   hideName,
+  suggestions = [],
+  onSuggestionClick,
 }: ChatMessageProps) => {
+  console.log("ChatMessage rendering with suggestions:", suggestions);
+  console.log("Is self message:", isSelf);
+
+  // Check if suggestions exist and have length
+  const hasSuggestions = Array.isArray(suggestions) && suggestions.length > 0;
+  console.log("Has suggestions:", hasSuggestions);
+
   return (
-    <div className={`flex flex-col gap-1 ${hideName ? "pt-0" : "pt-6"}`}>
+    <div className={`flex flex-col gap-1 ${hideName ? "pt-0" : "pt-6"} mb-4`}>
       {!hideName && (
         <div
           className={`text-${
@@ -35,6 +46,21 @@ export const ChatMessage = ({
       >
         {message}
       </div>
+
+      {/* Suggestions */}
+      {!isSelf && hasSuggestions && (
+        <div className="flex flex-wrap gap-2 mt-3 ml-2">
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              onClick={() => onSuggestionClick && onSuggestionClick(suggestion)}
+              className="bg-white border border-[#4D2583] text-[#4D2583] px-4 py-1.5 rounded-full text-sm font-medium hover:bg-[#F5F0FF] transition-colors shadow-sm hover:shadow active:scale-95"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

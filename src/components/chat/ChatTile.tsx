@@ -13,6 +13,7 @@ export type ChatMessageType = {
   id?: string;
   sender?: string;
   text?: string;
+  suggestions?: string[];
 };
 
 type ChatTileProps = {
@@ -29,18 +30,46 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
     }
   }, [containerRef, messages]);
 
-  const processedMessages = messages.map((msg) => ({
-    name:
-      msg.name ||
-      (msg.id
-        ? msg.id.split("-")[0]
-        : msg.sender === "agent"
+  const processedMessages = messages.map((msg) => {
+    console.log("Processing message in ChatTile:", msg);
+    console.log("Original suggestions:", msg.suggestions);
+
+    const processedMsg = { ...msg };
+
+    if (!processedMsg.name) {
+      processedMsg.name = processedMsg.id
+        ? processedMsg.id.split("-")[0]
+        : processedMsg.sender === "agent"
         ? "Assistant"
-        : "You"),
-    message: msg.message || msg.text || "",
-    isSelf: msg.isSelf !== undefined ? msg.isSelf : msg.sender !== "agent",
-    timestamp: msg.timestamp || new Date().getTime(),
-  }));
+        : "You";
+    }
+
+    if (!processedMsg.message) {
+      processedMsg.message = processedMsg.text || "";
+    }
+
+    if (processedMsg.isSelf === undefined) {
+      processedMsg.isSelf = processedMsg.sender !== "agent";
+    }
+
+    if (!processedMsg.timestamp) {
+      processedMsg.timestamp = new Date().getTime();
+    }
+
+    console.log(
+      "Processed message with suggestions:",
+      processedMsg.suggestions
+    );
+    return processedMsg;
+  });
+
+  console.log("All processed messages:", processedMessages);
+
+  const handleSuggestionClick = (suggestion: string) => {
+    if (onSend) {
+      onSend(suggestion);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4 w-full h-full bg-white">
@@ -64,6 +93,8 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
                 message={message.message}
                 isSelf={message.isSelf}
                 accentColor={accentColor}
+                suggestions={message.suggestions}
+                onSuggestionClick={handleSuggestionClick}
               />
             );
           })}

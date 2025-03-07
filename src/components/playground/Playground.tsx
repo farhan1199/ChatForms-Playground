@@ -56,6 +56,8 @@ export default function Playground({
   const roomState = useConnectionState();
   const tracks = useTracks();
 
+  const [selectedSuggestion, setSelectedSuggestion] = useState(false);
+
   useEffect(() => {
     if (roomState === ConnectionState.Connected) {
       localParticipant.setCameraEnabled(config.settings.inputs.camera);
@@ -67,6 +69,7 @@ export default function Playground({
   useEffect(() => {
     if (roomState === ConnectionState.Disconnected) {
       setTranscripts([]);
+      setSelectedSuggestion(false);
     }
   }, [roomState]);
 
@@ -84,18 +87,31 @@ export default function Playground({
           new TextDecoder("utf-8").decode(msg.payload)
         );
 
-        console.log("decoded", decoded);
+        console.log("decoded message:", decoded);
+        console.log(
+          "has suggestions:",
+          !!decoded.suggestions,
+          decoded.suggestions
+        );
 
         // Process the message based on the format
-        const newMessage = {
+        const newMessage: ChatMessageType = {
           // Use the id as the name (first part before the dash)
           name: decoded.id ? decoded.id.split("-")[0] : "unknown",
-          message: decoded.message || decoded.text,
+          message: decoded.message || decoded.text || "",
           timestamp: decoded.timestamp || new Date().getTime(),
           isSelf: decoded.sender !== "agent", // Messages from agent are not "self"
           id: decoded.id,
           sender: decoded.sender,
+          suggestions: decoded.suggestions || [], // Add suggestions
         };
+
+        // For agent messages, set a more friendly name
+        if (decoded.sender === "agent") {
+          newMessage.name = "Agent";
+        }
+
+        console.log("processed message with suggestions:", newMessage);
 
         setTranscripts((prev) => [...prev, newMessage]);
       }
@@ -118,18 +134,38 @@ export default function Playground({
   }, [config.settings.theme_color]);
 
   const chatTileContent = useMemo(() => {
+    // Find the index of the latest agent message
+    const latestAgentMessageIndex = [...transcripts]
+      .reverse()
+      .findIndex((msg) => msg.sender === "agent");
+    // Calculate the actual index in the original array (if found)
+    const latestAgentIndex =
+      latestAgentMessageIndex !== -1
+        ? transcripts.length - 1 - latestAgentMessageIndex
+        : -1;
+
     return (
       <ChatTile
-        messages={transcripts.map((msg) => ({
+        messages={transcripts.map((msg, index) => ({
           name: msg.sender === "agent" ? "Agent" : "You",
           message: (msg.message || msg.text || "").toString(),
           isSelf: msg.sender !== "agent",
           timestamp: msg.timestamp || new Date().getTime(),
+          // Only include suggestions for the latest agent message and only if no suggestion has been selected
+          suggestions:
+            !selectedSuggestion &&
+            msg.sender === "agent" &&
+            index === latestAgentIndex
+              ? msg.suggestions || []
+              : [],
         }))}
         accentColor={config.settings.theme_color}
         onSend={async (message) => {
           if (message.trim()) {
             try {
+              // Set selectedSuggestion to true when a message is sent
+              setSelectedSuggestion(true);
+
               await sendChat(message);
               console.log("Message sent:", message);
 
@@ -145,14 +181,21 @@ export default function Playground({
               return null;
             } catch (error) {
               console.error("Error sending message:", error);
-              return null;
             }
           }
           return null;
         }}
       />
     );
-  }, [config.settings.theme_color, transcripts, sendChat]);
+  }, [config.settings.theme_color, transcripts, sendChat, selectedSuggestion]);
+
+  // Reset selectedSuggestion when a new agent message is received
+  useEffect(() => {
+    const lastMessage = transcripts[transcripts.length - 1];
+    if (lastMessage && lastMessage.sender === "agent") {
+      setSelectedSuggestion(false);
+    }
+  }, [transcripts]);
 
   const settingsTileContent = useMemo(() => {
     return (
