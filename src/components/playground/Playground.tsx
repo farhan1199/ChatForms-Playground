@@ -252,7 +252,7 @@ export default function Playground({
       <PlaygroundTile
         padding={false}
         backgroundColor="gray-950"
-        className="h-full w-full basis-1/4 items-start overflow-y-auto flex"
+        className="h-full w-full basis-1/4 items-start overflow-y-auto"
         childrenClassName="h-full grow items-start"
       >
         {settingsTileContent}
@@ -280,7 +280,7 @@ export default function Playground({
         {/* Mobile Tabs */}
         <div className="flex flex-col grow basis-1/2 gap-4 h-full lg:hidden">
           <PlaygroundTabbedTile
-            className="h-full"
+            className="h-full shadow-md"
             tabs={mobileTabs}
             initialTab={mobileTabs.length - 1}
           />
@@ -290,7 +290,7 @@ export default function Playground({
         {config.settings.chat && (
           <PlaygroundTile
             title="Chat"
-            className="h-full grow basis-1/4 hidden lg:flex"
+            className="h-full grow basis-1/4 hidden lg:flex shadow-md"
           >
             {chatTileContent}
           </PlaygroundTile>
@@ -300,7 +300,7 @@ export default function Playground({
         <PlaygroundTile
           padding={false}
           backgroundColor="gray-950"
-          className="h-full w-full basis-1/4 items-start overflow-y-auto hidden max-w-[480px] lg:flex"
+          className="h-full w-full basis-1/4 items-start overflow-y-auto hidden max-w-[480px] lg:flex shadow-md"
           childrenClassName="h-full grow items-start"
         >
           {settingsTileContent}

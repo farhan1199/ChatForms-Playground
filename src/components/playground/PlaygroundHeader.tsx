@@ -34,9 +34,9 @@ export const PlaygroundHeader = ({
     >
       <div className="flex items-center gap-3 basis-2/3">
         <div className="flex lg:basis-1/2">
-          <a href="https://livekit.io">{logo ?? <LKLogo />}</a>
+          <p>1199SEIU</p>
         </div>
-        <div className="lg:basis-1/2 lg:text-center text-xs lg:text-base lg:font-semibold text-gray-700">
+        <div className="lg:basis-1/2 lg:text-center text-xs lg:text-base lg:font-semibold text-gray-600">
           {title}
         </div>
       </div>
@@ -45,7 +45,7 @@ export const PlaygroundHeader = ({
           <a
             href={githubLink}
             target="_blank"
-            className={`text-gray-700 hover:text-gray-500`}
+            className={`text-gray-600 hover:text-gray-800 transition-colors`}
           >
             <GithubSVG />
           </a>

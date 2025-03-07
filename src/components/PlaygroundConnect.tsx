@@ -34,19 +34,19 @@ const TokenConnect = ({
   const [token, setToken] = useState(config.settings.token);
 
   return (
-    <div className="flex left-0 top-0 w-full h-full bg-white/80 items-center justify-center text-center">
-      <div className="flex flex-col gap-4 p-8 bg-gray-50 w-full text-gray-700 border-t border-gray-200">
+    <div className="flex left-0 top-0 w-full h-full bg-gray-50/90 items-center justify-center text-center">
+      <div className="flex flex-col gap-4 p-8 bg-white w-full text-gray-700 border-t border-gray-200 shadow-md rounded-md">
         <div className="flex flex-col gap-2">
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="text-gray-700 text-sm bg-transparent border border-gray-300 rounded-sm px-3 py-2"
+            className="text-gray-700 text-sm bg-gray-50 border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500"
             placeholder="wss://url"
           ></input>
           <textarea
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            className="text-gray-700 text-sm bg-transparent border border-gray-300 rounded-sm px-3 py-2"
+            className="text-gray-700 text-sm bg-gray-50 border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500"
             placeholder="room token..."
           ></textarea>
         </div>
@@ -84,9 +84,9 @@ export const PlaygroundConnect = ({
     ? "Connect to playground with LiveKit Cloud or manually with a URL and token"
     : "Connect to playground with a URL and token";
   return (
-    <div className="flex left-0 top-0 w-full h-full bg-white/80 items-center justify-center text-center gap-2">
+    <div className="flex left-0 top-0 w-full h-full bg-gray-50/90 items-center justify-center text-center gap-2">
       <div className="min-h-[540px]">
-        <div className="flex flex-col bg-gray-50 w-full max-w-[480px] rounded-lg text-gray-700 border border-gray-200">
+        <div className="flex flex-col bg-white w-full max-w-[480px] rounded-lg text-gray-700 border border-gray-200 shadow-md">
           <div className="flex flex-col gap-2">
             <div className="px-10 space-y-2 py-6">
               <h1 className="text-2xl">Connect to playground</h1>
@@ -113,7 +113,7 @@ export const PlaygroundConnect = ({
               </div>
             )}
           </div>
-          <div className="flex flex-col bg-gray-100 flex-grow">
+          <div className="flex flex-col bg-gray-50 flex-grow">
             {showCloud && CLOUD_ENABLED ? (
               <CloudConnect accentColor={accentColor} />
             ) : (

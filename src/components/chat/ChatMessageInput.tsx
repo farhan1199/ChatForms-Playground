@@ -58,7 +58,7 @@ export const ChatMessageInput = ({
 
   return (
     <div
-      className="flex flex-col gap-2 border-t border-t-gray-300"
+      className="flex flex-col gap-2 border-t border-t-gray-200"
       style={{ height: height }}
     >
       <div className="flex flex-row pt-3 gap-2 items-center relative">
@@ -79,7 +79,7 @@ export const ChatMessageInput = ({
         ></div>
         <input
           ref={inputRef}
-          className={`w-full text-xs caret-transparent bg-transparent opacity-75 text-gray-700 p-2 pr-6 rounded-sm focus:opacity-100 focus:outline-none focus:border-${accentColor}-700 focus:ring-1 focus:ring-${accentColor}-700`}
+          className={`w-full text-xs caret-transparent bg-gray-50 opacity-90 text-gray-700 p-2 pr-6 rounded-md focus:opacity-100 focus:outline-none focus:border-${accentColor}-500 focus:ring-1 focus:ring-${accentColor}-500 border border-gray-200`}
           style={{
             paddingLeft: message.length > 0 ? "12px" : "24px",
             caretShape: "block",
@@ -110,9 +110,9 @@ export const ChatMessageInput = ({
         <button
           disabled={message.length === 0 || !onSend}
           onClick={handleSend}
-          className={`text-xs uppercase text-${accentColor}-700 hover:bg-${accentColor}-100 p-2 rounded-md opacity-${
+          className={`text-xs uppercase text-${accentColor}-700 hover:bg-${accentColor}-50 p-2 rounded-md opacity-${
             message.length > 0 ? 100 : 25
-          } pointer-events-${message.length > 0 ? "auto" : "none"}`}
+          } pointer-events-${message.length > 0 ? "auto" : "none"} font-medium`}
         >
           Send
         </button>
