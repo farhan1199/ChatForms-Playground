@@ -108,6 +108,9 @@ export default function Playground({
         // For agent messages, set a more friendly name
         if (decoded.sender === "agent") {
           newMessage.name = "Agent";
+
+          // Reset selectedSuggestion when a new agent message arrives
+          setSelectedSuggestion(false);
         }
 
         setTranscripts((prev) => [...prev, newMessage]);
@@ -119,7 +122,7 @@ export default function Playground({
         console.log("decoded message other:", decoded);
       }
     },
-    [transcripts]
+    [transcripts, setSelectedSuggestion]
   );
 
   useDataChannel(onDataReceived);

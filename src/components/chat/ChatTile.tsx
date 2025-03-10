@@ -1,7 +1,7 @@
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatMessageInput } from "@/components/chat/ChatMessageInput";
 import { ChatMessage as ComponentsChatMessage } from "@livekit/components-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const inputHeight = 48;
 
@@ -32,11 +32,17 @@ type ChatTileProps = {
 
 export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [popupResponded, setPopupResponded] = useState(false);
+
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [containerRef, messages]);
+
+  useEffect(() => {
+    setPopupResponded(false);
+  }, [messages.length]);
 
   const processedMessages = messages.map((msg) => {
     const processedMsg = { ...msg };
@@ -65,15 +71,24 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
   });
 
   const handleSuggestionClick = (suggestion: string) => {
+    setPopupResponded(true);
+
     if (onSend) {
       onSend(suggestion);
     }
   };
 
-  // Check if there's an active popup that should disable the input
-  const hasActivePopup = processedMessages.some(
-    (msg) => msg.type === "showPopup" && msg.popupType && !msg.isSelf
-  );
+  const latestMessage =
+    processedMessages.length > 0
+      ? processedMessages[processedMessages.length - 1]
+      : null;
+
+  const hasActivePopup =
+    !popupResponded &&
+    latestMessage !== null &&
+    latestMessage.type === "showPopup" &&
+    latestMessage.popupType &&
+    !latestMessage.isSelf;
 
   return (
     <div className="flex flex-col gap-4 w-full h-full bg-white">
@@ -89,6 +104,14 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
             const hideName =
               index >= 1 && allMsg[index - 1].name === message.name;
 
+            const isLatestMessage = index === processedMessages.length - 1;
+            const showPopup =
+              isLatestMessage &&
+              !popupResponded &&
+              message.type === "showPopup" &&
+              message.popupType &&
+              !message.isSelf;
+
             return (
               <ChatMessage
                 key={index}
@@ -99,9 +122,9 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
                 accentColor={accentColor}
                 suggestions={message.suggestions}
                 onSuggestionClick={handleSuggestionClick}
-                type={message.type}
-                popupType={message.popupType}
-                params={message.params}
+                type={showPopup ? message.type : undefined}
+                popupType={showPopup ? message.popupType : undefined}
+                params={showPopup ? message.params : undefined}
               />
             );
           })}

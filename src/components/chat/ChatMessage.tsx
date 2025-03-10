@@ -1,3 +1,5 @@
+import { DonationConfirmPopup } from "./DonationConfirmPopup";
+
 type ChatMessageProps = {
   message: string;
   accentColor: string;
@@ -12,6 +14,8 @@ type ChatMessageProps = {
     title?: string;
     message?: string;
     form_data?: Record<string, any>;
+    donation_amount?: string | number;
+    user_name?: string;
     [key: string]: any;
   };
 };
@@ -61,6 +65,55 @@ export const ChatMessage = ({
     );
   };
 
+  // Render the appropriate popup content based on popupType
+  const renderPopupContent = () => {
+    if (!isPopup) return null;
+
+    switch (popupType) {
+      case "confirm_donation":
+        return (
+          <DonationConfirmPopup
+            userName={params?.user_name || "User"}
+            donationAmount={params?.donation_amount || "$10.00"}
+            onConfirm={(response) =>
+              onSuggestionClick && onSuggestionClick(response)
+            }
+          />
+        );
+      case "verify_information":
+        return (
+          <div className="mt-3 bg-[#F5F0FF] p-4 rounded-md border border-[#4D2583] shadow-sm">
+            {params?.title && (
+              <h3 className="font-bold text-[#4D2583] mb-2">{params.title}</h3>
+            )}
+            {params?.message && (
+              <p className="text-gray-700 mb-3">{params.message}</p>
+            )}
+
+            {/* Render form data for verify_information popup */}
+            {renderFormData()}
+
+            {/* Popup Buttons */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() =>
+                    onSuggestionClick && onSuggestionClick(suggestion)
+                  }
+                  className="bg-white border border-[#4D2583] text-[#4D2583] px-4 py-1.5 rounded-full text-sm font-medium hover:bg-[#F5F0FF] transition-colors shadow-sm hover:shadow active:scale-95"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className={`flex flex-col gap-1 ${hideName ? "pt-0" : "pt-6"} mb-4`}>
       {!hideName && (
@@ -85,34 +138,7 @@ export const ChatMessage = ({
       </div>
 
       {/* Popup Content */}
-      {isPopup && (
-        <div className="mt-3 bg-[#F5F0FF] p-4 rounded-md border border-[#4D2583] shadow-sm">
-          {params.title && (
-            <h3 className="font-bold text-[#4D2583] mb-2">{params.title}</h3>
-          )}
-          {params.message && (
-            <p className="text-gray-700 mb-3">{params.message}</p>
-          )}
-
-          {/* Render form data for verify_information popup */}
-          {popupType === "verify_information" && renderFormData()}
-
-          {/* Popup Buttons */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            {suggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                onClick={() =>
-                  onSuggestionClick && onSuggestionClick(suggestion)
-                }
-                className="bg-white border border-[#4D2583] text-[#4D2583] px-4 py-1.5 rounded-full text-sm font-medium hover:bg-[#F5F0FF] transition-colors shadow-sm hover:shadow active:scale-95"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {isPopup && renderPopupContent()}
 
       {/* Regular Suggestions (only show if not a popup) */}
       {!isSelf && hasSuggestions && !isPopup && (
