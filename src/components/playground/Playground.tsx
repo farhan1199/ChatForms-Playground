@@ -99,6 +99,10 @@ export default function Playground({
           id: decoded.id,
           sender: decoded.sender,
           suggestions: decoded.suggestions || [], // Add suggestions
+          // Add popup-related fields if present
+          type: decoded.type,
+          popupType: decoded.popupType,
+          params: decoded.params,
         };
 
         // For agent messages, set a more friendly name
@@ -157,6 +161,10 @@ export default function Playground({
             index === latestAgentIndex
               ? msg.suggestions || []
               : [],
+          // Pass popup properties
+          type: msg.type,
+          popupType: msg.popupType,
+          params: msg.params,
         }))}
         accentColor={config.settings.theme_color}
         onSend={async (message) => {

@@ -6,6 +6,7 @@ type ChatMessageInput = {
   accentColor: string;
   height: number;
   onSend?: (message: string) => void;
+  disabled?: boolean;
 };
 
 export const ChatMessageInput = ({
@@ -13,6 +14,7 @@ export const ChatMessageInput = ({
   accentColor,
   height,
   onSend,
+  disabled = false,
 }: ChatMessageInput) => {
   const [message, setMessage] = useState("");
   const [inputTextWidth, setInputTextWidth] = useState(0);
@@ -24,7 +26,7 @@ export const ChatMessageInput = ({
   const [inputHasFocus, setInputHasFocus] = useState(false);
 
   const handleSend = useCallback(() => {
-    if (!onSend) {
+    if (!onSend || disabled) {
       return;
     }
     if (message === "") {
@@ -33,7 +35,7 @@ export const ChatMessageInput = ({
 
     onSend(message);
     setMessage("");
-  }, [onSend, message]);
+  }, [onSend, message, disabled]);
 
   useEffect(() => {
     setIsTyping(true);
@@ -79,7 +81,9 @@ export const ChatMessageInput = ({
         ></div>
         <input
           ref={inputRef}
-          className={`w-full text-xs caret-transparent bg-gray-50 opacity-90 text-gray-700 p-2 pr-6 rounded-md focus:opacity-100 focus:outline-none focus:border-${accentColor}-500 focus:ring-1 focus:ring-${accentColor}-500 border border-gray-200`}
+          className={`w-full text-xs caret-transparent bg-gray-50 opacity-90 text-gray-700 p-2 pr-6 rounded-md focus:opacity-100 focus:outline-none focus:border-${accentColor}-500 focus:ring-1 focus:ring-${accentColor}-500 border border-gray-200 ${
+            disabled ? "bg-gray-100 cursor-not-allowed" : ""
+          }`}
           style={{
             paddingLeft: message.length > 0 ? "12px" : "24px",
             caretShape: "block",
@@ -87,19 +91,24 @@ export const ChatMessageInput = ({
           placeholder={placeholder}
           value={message}
           onChange={(e) => {
-            setMessage(e.target.value);
+            if (!disabled) {
+              setMessage(e.target.value);
+            }
           }}
           onFocus={() => {
-            setInputHasFocus(true);
+            if (!disabled) {
+              setInputHasFocus(true);
+            }
           }}
           onBlur={() => {
             setInputHasFocus(false);
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !disabled) {
               handleSend();
             }
           }}
+          disabled={disabled}
         ></input>
         <span
           ref={hiddenInputRef}
@@ -108,11 +117,13 @@ export const ChatMessageInput = ({
           {message.replaceAll(" ", "\u00a0")}
         </span>
         <button
-          disabled={message.length === 0 || !onSend}
+          disabled={message.length === 0 || !onSend || disabled}
           onClick={handleSend}
           className={`text-xs uppercase text-${accentColor}-700 hover:bg-${accentColor}-50 p-2 rounded-md opacity-${
-            message.length > 0 ? 100 : 25
-          } pointer-events-${message.length > 0 ? "auto" : "none"} font-medium`}
+            message.length > 0 && !disabled ? 100 : 25
+          } pointer-events-${
+            message.length > 0 && !disabled ? "auto" : "none"
+          } font-medium`}
         >
           Send
         </button>

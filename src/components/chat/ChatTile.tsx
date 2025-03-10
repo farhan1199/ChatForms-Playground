@@ -14,6 +14,14 @@ export type ChatMessageType = {
   sender?: string;
   text?: string;
   suggestions?: string[];
+  type?: string;
+  popupType?: "confirm_donation" | "verify_information";
+  params?: {
+    title?: string;
+    message?: string;
+    form_data?: Record<string, any>;
+    [key: string]: any;
+  };
 };
 
 type ChatTileProps = {
@@ -62,6 +70,11 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
     }
   };
 
+  // Check if there's an active popup that should disable the input
+  const hasActivePopup = processedMessages.some(
+    (msg) => msg.type === "showPopup" && msg.popupType && !msg.isSelf
+  );
+
   return (
     <div className="flex flex-col gap-4 w-full h-full bg-white">
       <div
@@ -86,6 +99,9 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
                 accentColor={accentColor}
                 suggestions={message.suggestions}
                 onSuggestionClick={handleSuggestionClick}
+                type={message.type}
+                popupType={message.popupType}
+                params={message.params}
               />
             );
           })}
@@ -93,9 +109,14 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
       </div>
       <ChatMessageInput
         height={inputHeight}
-        placeholder="Type a message"
+        placeholder={
+          hasActivePopup
+            ? "Please respond to the popup above"
+            : "Type a message"
+        }
         accentColor={accentColor}
         onSend={onSend}
+        disabled={hasActivePopup}
       />
     </div>
   );
