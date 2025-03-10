@@ -88,11 +88,6 @@ export default function Playground({
         );
 
         console.log("decoded message:", decoded);
-        console.log(
-          "has suggestions:",
-          !!decoded.suggestions,
-          decoded.suggestions
-        );
 
         // Process the message based on the format
         const newMessage: ChatMessageType = {
@@ -111,9 +106,13 @@ export default function Playground({
           newMessage.name = "Agent";
         }
 
-        console.log("processed message with suggestions:", newMessage);
-
         setTranscripts((prev) => [...prev, newMessage]);
+      } else {
+        //decode and log
+        const decoded = JSON.parse(
+          new TextDecoder("utf-8").decode(msg.payload)
+        );
+        console.log("decoded message other:", decoded);
       }
     },
     [transcripts]

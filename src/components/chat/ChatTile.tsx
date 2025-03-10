@@ -31,9 +31,6 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
   }, [containerRef, messages]);
 
   const processedMessages = messages.map((msg) => {
-    console.log("Processing message in ChatTile:", msg);
-    console.log("Original suggestions:", msg.suggestions);
-
     const processedMsg = { ...msg };
 
     if (!processedMsg.name) {
@@ -56,14 +53,8 @@ export const ChatTile = ({ messages, accentColor, onSend }: ChatTileProps) => {
       processedMsg.timestamp = new Date().getTime();
     }
 
-    console.log(
-      "Processed message with suggestions:",
-      processedMsg.suggestions
-    );
     return processedMsg;
   });
-
-  console.log("All processed messages:", processedMessages);
 
   const handleSuggestionClick = (suggestion: string) => {
     if (onSend) {

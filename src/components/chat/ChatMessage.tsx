@@ -17,12 +17,8 @@ export const ChatMessage = ({
   suggestions = [],
   onSuggestionClick,
 }: ChatMessageProps) => {
-  console.log("ChatMessage rendering with suggestions:", suggestions);
-  console.log("Is self message:", isSelf);
-
   // Check if suggestions exist and have length
   const hasSuggestions = Array.isArray(suggestions) && suggestions.length > 0;
-  console.log("Has suggestions:", hasSuggestions);
 
   return (
     <div className={`flex flex-col gap-1 ${hideName ? "pt-0" : "pt-6"} mb-4`}>
